@@ -25,6 +25,9 @@ module Fcmpush
       @access_token_expiry = Time.now.utc + access_token_response['expires_in']
       @server_key = configuration.server_key
       @connection = Net::HTTP::Persistent.new
+
+      @connection.open_timeout = configuration.open_timeout if configuration.open_timeout
+      @connection.read_timeout = configuration.read_timeout if configuration.read_timeout
     end
 
     def v1_authorize
@@ -34,6 +37,7 @@ module Fcmpush
                        else
                          File.open(configuration.json_key_io)
                        end
+                  io.rewind if io.respond_to?(:read)
                   Google::Auth::ServiceAccountCredentials.make_creds(
                     json_key_io: io,
                     scope: configuration.scope
@@ -97,7 +101,8 @@ module Fcmpush
         uri = URI.join(TOPIC_DOMAIN, TOPIC_ENDPOINT_PREFIX + suffix)
         uri.query = URI.encode_www_form(query) unless query.empty?
 
-        headers = legacy_authorized_header(headers)
+        headers = v1_authorized_header(headers)
+        headers['access_token_auth'] = 'true'
         post = Net::HTTP::Post.new(uri, headers)
         post.body = make_subscription_body(topic, *instance_ids)
 

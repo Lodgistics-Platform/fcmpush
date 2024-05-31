@@ -1,6 +1,6 @@
 module Fcmpush
   class Configuration
-    attr_accessor :scope, :json_key_io, :server_key
+    attr_accessor :scope, :json_key_io, :server_key, :open_timeout, :read_timeout
 
     def initialize
       @scope = ['https://www.googleapis.com/auth/firebase.messaging']
@@ -16,6 +16,10 @@ module Fcmpush
 
       # regacy auth
       @server_key = ENV['FCM_SERVER_KEY']
+
+      # connection timeouts
+      @open_timeout = nil
+      @read_timeout = nil
     end
   end
 end
